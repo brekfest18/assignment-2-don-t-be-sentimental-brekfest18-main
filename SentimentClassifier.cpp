@@ -18,7 +18,8 @@ void SentimentClassifier::train(const char* trainingDataFile) {
 
     std::string line;
     while (std::getline(file, line)) {
-        std::vector<DSString> tokens = tokenize(line.c_str());
+        DSString dsLine(line.c_str()); // Convert std::string to DSString
+        std::vector<DSString> tokens = tokenize(dsLine); // Use DSString tokens
 
         int sentiment = tokens[0].customToInt(); // Convert DSString to int
 
@@ -45,18 +46,16 @@ void SentimentClassifier::predict(const char* testingDataFile, const char* predi
     std::ofstream output(predictionsFile);
     if (!output.is_open()) {
         std::cerr << "Error: Could not create sentiment output file." << std::endl;
+        file.close();  // Close the input file before returning
         return;
     }
 
     std::string line;
-    while (std::getline(file, line)) {
-        // Skip empty lines
-        if (line.empty()) {
-            continue;
-        }
+    std::getline(file, line); // Read and discard the first line (headers)
 
-        DSString dsLine = line.c_str(); // Convert std::string to DSString
-        std::vector<DSString> tokens = tokenize(dsLine.c_str());
+    while (std::getline(file, line)) {
+        DSString dsLine(line.c_str()); // Convert std::string to DSString
+        std::vector<DSString> tokens = tokenize(dsLine); // Use DSString tokens
 
         // Ensure the line has the expected number of tokens
         if (tokens.size() < 2) {
@@ -77,6 +76,8 @@ void SentimentClassifier::predict(const char* testingDataFile, const char* predi
     file.close();
     output.close();
 }
+
+
 
 void SentimentClassifier::evaluatePredictions(const char* groundTruthFile) {
     std::ifstream truthFileStream(groundTruthFile);
@@ -144,16 +145,15 @@ void SentimentClassifier::evaluatePredictions(const char* groundTruthFile) {
     }
 }
 
-
-
-std::vector<std::string> tokenize(const std::string& input) {
-    std::vector<std::string> tokens;
-    std::istringstream iss(input);
-    std::string word;
+std::vector<DSString> SentimentClassifier::tokenize(const DSString& input) {
+    // Implementation of the tokenize function for DSString
+    std::vector<DSString> tokens;
+    DSString word;
+    DSString lowercasedInput = input.toLowerCase(); // Assuming you have a toLowerCase() function in DSString
+    std::istringstream iss(lowercasedInput.c_str()); // Use c_str() to get the char array
     while (iss >> word) {
-        // Convert word to lowercase for basic lemmatization
-        std::transform(word.begin(), word.end(), word.begin(), ::tolower);
         tokens.push_back(word);
     }
     return tokens;
 }
+
